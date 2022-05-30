@@ -1,0 +1,4 @@
+﻿  MazeSolver.cpp
+F:\prog\MazeSolver\MazeSolver\GenerateMaze.h(100,1): warning C4305: '=': truncation from 'unsigned int' to 'float'
+F:\prog\MazeSolver\MazeSolver\GenerateMaze.h(106,47): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+  MazeSolver.vcxproj -> F:\prog\MazeSolver\Debug\MazeSolver.exe

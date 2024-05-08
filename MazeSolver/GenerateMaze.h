@@ -10,7 +10,7 @@ class GenerateMaze: public olcConsoleGameEngine
 public:
 	GenerateMaze()
 	{
-		m_sAppName = L"MAZE";
+		m_sAppName = L"MAZE SOLVER";
 	}
 
 private:
@@ -30,7 +30,7 @@ private:
 	};
 
 	sNode* nodes = nullptr;
-	int nMapWidth = 40;
+	int nMapWidth = 25;
 	int nMapHeight = 25;
 
 	bool mazeFinished = false;
@@ -57,8 +57,10 @@ private:
 protected:
 	virtual bool OnUserCreate()
 	{
-		mazeWidth = 40;
+		mazeWidth = 25;
 		mazeHeight = 25;
+
+		srand(time(0));
 
 		maze = new int[mazeWidth * mazeHeight];
 
@@ -97,7 +99,7 @@ protected:
 				nodes[y * nMapWidth + x].parent = nullptr;
 				nodes[y * nMapWidth + x].bVisited = false;
 				nodes[y * nMapWidth + x].fLocalGoal = INFINITY;
-				nodes[y * nMapWidth + x].fGlobalGoal = INFINITE;
+				nodes[y * nMapWidth + x].fGlobalGoal = INFINITY;
 
 			}
 
@@ -118,7 +120,7 @@ protected:
 		list<sNode*> listNotTestedNodes;
 		listNotTestedNodes.push_back(nodeStart);
 
-		while (!listNotTestedNodes.empty() && nodeCurrent != nodeEnd)
+		while(!listNotTestedNodes.empty() && nodeCurrent != nodeEnd)
 		{
 			listNotTestedNodes.sort([](const sNode* lhs, const sNode* rhs) { return lhs->fGlobalGoal < rhs->fGlobalGoal; });
 
@@ -131,6 +133,7 @@ protected:
 			{
 				break;
 			}
+			int nNodeSize = 3;
 
 			nodeCurrent = listNotTestedNodes.front();
 			nodeCurrent->bVisited = true;
@@ -138,7 +141,11 @@ protected:
 			for (auto nodeNeighbour : nodeCurrent -> vecNeighbours)
 			{
 				if (!nodeNeighbour->bVisited)
+				{
 					listNotTestedNodes.push_back(nodeNeighbour);
+					
+				}
+					
 
 				float fPossiblyLowerGoal = nodeCurrent->fLocalGoal + distance(nodeCurrent, nodeNeighbour);
 
@@ -156,8 +163,9 @@ protected:
 
 	virtual bool OnUserUpdate(float fElapsedTime)
 	{
-		vector<int> neighbours;
+		
 
+		
 
 		auto offset = [&](int x, int y)
 		{
@@ -166,7 +174,7 @@ protected:
 
 		if (visitedCells < mazeWidth * mazeHeight)
 		{
-
+			vector<int> neighbours;
 
 			if (m_stack.top().second > 0 && (maze[offset(0, -1)] & CELL_VISITED) == 0)
 				neighbours.push_back(0);
@@ -188,35 +196,38 @@ protected:
 				{
 				case 0:
 					maze[offset(0, 0)] |= CELL_PATH_N;
-					maze[offset(0, -1)] |=  CELL_PATH_S;
+					maze[offset(0, -1)] |= CELL_VISITED | CELL_PATH_S;
 					nodes[offset(0, 0)].vecNeighbours.push_back(&nodes[offset(0, -1)]);
+					nodes[offset(0, -1)].vecNeighbours.push_back(&nodes[offset(0, 0)]);
 					m_stack.push(make_pair((m_stack.top().first + 0), (m_stack.top().second - 1)));
 						break;
 
 				case 1:
-					maze[offset(+1, 0)] |= CELL_PATH_W;
+					maze[offset(+1, 0)] |= CELL_VISITED | CELL_PATH_W;
 					maze[offset(0, 0)] |= CELL_PATH_E;
-					nodes[offset(0, 0)].vecNeighbours.push_back(&nodes[offset(1, 0)]);
+					nodes[offset(0, 0)].vecNeighbours.push_back(&nodes[offset(+1, 0)]);
+					nodes[offset(+1, 0)].vecNeighbours.push_back(&nodes[offset(0, 0)]);
 					m_stack.push(make_pair((m_stack.top().first + 1), (m_stack.top().second - 0)));
 					break;
 
 				case 2:
 					maze[offset(0, 0)] |= CELL_PATH_S;
-					maze[offset(0, 1)] |= CELL_PATH_N;
-					nodes[offset(0, 0)].vecNeighbours.push_back(&nodes[offset(0, 1)]);
+					maze[offset(0, +1)] |= CELL_VISITED | CELL_PATH_N;
+					nodes[offset(0, 0)].vecNeighbours.push_back(&nodes[offset(0, +1)]);
+					nodes[offset(0, +1)].vecNeighbours.push_back(&nodes[offset(0, 0)]);
 					m_stack.push(make_pair((m_stack.top().first + 0), (m_stack.top().second + 1)));
 					break;
 
 				case 3:
-					maze[offset(-1, 0)] |= CELL_PATH_N;
-					maze[offset(0, 0)] |= CELL_PATH_S;
+					maze[offset(-1, 0)] |= CELL_VISITED | CELL_PATH_E;
+					maze[offset(0, 0)] |= CELL_PATH_W;
 					nodes[offset(0, 0)].vecNeighbours.push_back(&nodes[offset(-1, 0)]);
+					nodes[offset(-1, 0)].vecNeighbours.push_back(&nodes[offset(0, 0)]);
 					m_stack.push(make_pair((m_stack.top().first - 1), (m_stack.top().second + 0)));
 					break;
 
 				}
 
-				maze[offset(0, 0)] |= CELL_VISITED;
 				visitedCells++;
 			}
 			else
@@ -311,7 +322,10 @@ protected:
 				}
 			}
 
-			AStar();
+			if (mazeFinished)
+			{
+				AStar();
+			}
 
 			if (nodeEnd != nullptr)
 			{
